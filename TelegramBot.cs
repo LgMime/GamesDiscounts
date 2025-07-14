@@ -33,18 +33,16 @@ async Task OnError(Exception exception, HandleErrorSource source)
             );
        }
     }
-    else if (msg.Text == "/Stop")
-    {
-        // somehow stop the bot
-    }
+    //else if (msg.Text == "/Sale")
+    //{
+    //    // send a message with the current sale games waht`s player searching befor. I need serialization of all games waht's player searching and then send it to player
+    //}
     else
     {
-
-        GameInfo gameInfo = new GameInfo(); 
+        GameInfo gameInfo = new GameInfo();
         await bot.SendMessage(msg.Chat, "Seaching Game");
         string gameName = msg.Text;
-
-        await gameInfo.FoundGameAppId(gameName);
-        await bot.SendMessage(msg.Chat, "Final price: " + gameInfo.finalPrice + "\n Discount: " + gameInfo.discount);
+        await gameInfo.FoundGameAppIdAsync(gameName);
+        await bot.SendMessage(msg.Chat, "Final price: " + gameInfo.finalPrice + "\nDiscount: " + gameInfo.discount+ "%");
     }
 }
