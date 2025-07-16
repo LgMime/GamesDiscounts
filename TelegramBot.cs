@@ -20,18 +20,11 @@ async Task OnError(Exception exception, HandleErrorSource source)
 }
 
 // method that handle messages received by the bot:
- async Task OnMessage(Message msg, UpdateType type)
-{  
+async Task OnMessage(Message msg, UpdateType type)
+{
     if (msg.Text == "/Start")
     {
-       for (int i = 0; i < 3; i++)
-       {
-            await bot.SendMessage(
-                chatId: msg.Chat.Id,
-                text: "Hello, World! " + i,
-                cancellationToken: cts.Token
-            );
-       }
+        await bot.SendMessage(msg.Chat, "Write me the name of the game and I will show you a discount on it:");
     }
     //else if (msg.Text == "/Sale")
     //{
@@ -42,7 +35,9 @@ async Task OnError(Exception exception, HandleErrorSource source)
         GameInfo gameInfo = new GameInfo();
         await bot.SendMessage(msg.Chat, "Seaching Game");
         string gameName = msg.Text;
+
         await gameInfo.FoundGameAppIdAsync(gameName);
-        await bot.SendMessage(msg.Chat, "Final price: " + gameInfo.finalPrice + "\nDiscount: " + gameInfo.discount+ "%");
+        await bot.SendPhoto(chatId: msg.Chat.Id, photo: gameInfo.HeaderImage.Media, caption: $"Final price: {gameInfo.FinalPrice}\nDiscount:{gameInfo.Discount}%");
     }
+
 }
