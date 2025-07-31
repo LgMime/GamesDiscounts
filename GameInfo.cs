@@ -12,6 +12,7 @@ namespace GamesDiscounts
         public string? Discount { get; set; }
         public string? FinalPrice { get; set; }
         public InputMediaPhoto? HeaderImage { get; set; }
+        public bool SearchEquals { get; set; } = false;
         private string _priceOrDiscount { get; set; } = "0";
         private static readonly HttpClient _client = new HttpClient();
 
@@ -23,17 +24,26 @@ namespace GamesDiscounts
             return result.applist.apps;
         }
 
-        public async Task<SaveEntry> FoundGameAppIdAsync(string gameName)
+        public async Task<SaveEntry> FoundGameAppIdAsync(string gameName, bool SearchEquals)
         {
+
             var allGames = await DesAllGamesAsync();
-            var foundGame = allGames.FirstOrDefault(games => games.Name != null && games.Name.Equals(gameName, StringComparison.OrdinalIgnoreCase));
+            NamesGames? foundGame = null;
+
+            if (SearchEquals == false)
+                foundGame = allGames.FirstOrDefault(games => games.Name != null && games.Name.StartsWith(gameName, StringComparison.OrdinalIgnoreCase));
+            else
+            {
+                foundGame = allGames.FirstOrDefault(games => games.Name != null && games.Name.Equals(gameName, StringComparison.OrdinalIgnoreCase));
+            }
+
             if (foundGame == null)
             {
                 Console.WriteLine($"[ERROR] Игра '{gameName}' не найдена в списке");
                 return null;
             }
 
-            var parse = await _client.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={foundGame.AppId}&cc=ua");//&cc=ua Ukranian region, if i want to get languange Ukrainian i need paste this &cc=ua&l=ukrainian  
+            var parse = await _client.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={foundGame.AppId}&cc=ua");//&cc=ua Ukranian region. If i want to get languange Ukrainian i need paste this &cc=ua&l=ukrainian  
 
             var gameDetails = JsonConvert.DeserializeObject<Dictionary<string, AppDeatailsResponse>>(parse);
             if (gameDetails.TryGetValue(foundGame.AppId.ToString(), out var appDetails) && appDetails.success)
@@ -81,7 +91,7 @@ namespace GamesDiscounts
                 {
                     if (game.Chat == chatId)
                     {
-                        await FoundGameAppIdAsync(game.Name);
+                        await FoundGameAppIdAsync(game.Name, true);
                         result.Add(new SaveEntry
                         {
                             Chat = game.Chat,

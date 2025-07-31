@@ -9,7 +9,7 @@ namespace GamesDiscounts
 
     public class TgBot
     {
-
+        
         private static readonly Dictionary<long?, string> userState = new();
 
         static TelegramBotClient bot = new TelegramBotClient("8002657900:AAEu1_d3RQ2ZJS15stf23n3ywJqYNdZRYIY");
@@ -44,10 +44,10 @@ namespace GamesDiscounts
                 switch (someText)
                 {
                     case "/start":
-                        await bot.SendMessage(id, "Welcome!\n Command to Use👾\n😍/save to save a game,\n🤔/sale to show saved games,\n☠/delete to remove game from savelist or \n🤔/search to find a game.");
+                        await bot.SendMessage(id, "Welcome!\n Command to Use👾\n😍/Save Add a game to your favorites\n🤔/Sale Show your saved games,\n☠/Delete Remove a game from your favorites\n🤔/Search Find a game by name\n🤔/ExactSearch Search with exact match");
                         break;
                     case "/save":
-                        await bot.SendMessage(id, "Enter the name of the game you want to save:");
+                        await bot.SendMessage(id, "Type a exact game's name for save:");
                         userState[id] = "save";
                         break;
                     case "/sale":
@@ -55,12 +55,16 @@ namespace GamesDiscounts
                         await SaleHandler(bot, update, token);
                         break;
                     case "/delete":
-                        await bot.SendMessage(id, "Enter the name of the game you want to delete:");
+                        await bot.SendMessage(id, "Type a exact game's name for delete:");
                         userState[id] = "delete";
                         break;
                     case "/search":
-                        await bot.SendMessage(id, "Enter the name of the game you want to search for:");
+                        await bot.SendMessage(id, "Type a game's name for seacrh:");
                         userState[id] = "search";
+                        break;
+                    case "/exactsearch":
+                        await bot.SendMessage(id, "Type the exact game's name for search:");
+                        userState[id] = "exactsearch";
                         break;
 
                     default:
@@ -72,9 +76,12 @@ namespace GamesDiscounts
                                     await SaveHandler(bot, update, token);
                                     userState.Remove(id);
                                     break;
-
                                 case "search":
-                                    await SearchHandler(bot, update, token, someText);
+                                    await SearchHandler(bot, update, token, someText, false);
+                                    userState.Remove(id);
+                                    break;
+                                case "exactsearch":
+                                    await SearchHandler(bot, update, token, someText, true);
                                     userState.Remove(id);
                                     break;
                                 case "delete":
@@ -116,7 +123,7 @@ namespace GamesDiscounts
 
                 try
                 {
-                    await gameInfo.FoundGameAppIdAsync(gameName);
+                    await gameInfo.FoundGameAppIdAsync(gameName , true);
                     if (gameInfo.Name == null || gameInfo.HeaderImage == null)
                     {
                         await bot.SendMessage(update.Message.Chat.Id, "Game not found. Please check the name and try again.");
@@ -149,7 +156,7 @@ namespace GamesDiscounts
 
                 foreach (var game in savedGames)
                 {
-                    var gameDetails = await gameInfo.FoundGameAppIdAsync(game.Name);
+                    var gameDetails = await gameInfo.FoundGameAppIdAsync(game.Name, true);
                     Console.WriteLine($"game.Name: {game.Name}, final_formatted: {game.final_formatted}, discount_percent: {game.discount_percent}");
                     if (game.Name != null && game.final_formatted != null && game.discount_percent != null)
                     {
@@ -164,13 +171,13 @@ namespace GamesDiscounts
                 }
             }
         }
-        private static async Task SearchHandler(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame)
+        private static async Task SearchHandler(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame, bool searchEquals)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 GameInfo gameInfo = new GameInfo();
                 await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");
-                await gameInfo.FoundGameAppIdAsync(nameGame);
+                await gameInfo.FoundGameAppIdAsync(nameGame, searchEquals);
                 if (gameInfo.Name != null && gameInfo.HeaderImage != null)
                 {
                     await bot.SendPhoto(chatId: update.Message.Chat.Id,
@@ -187,5 +194,6 @@ namespace GamesDiscounts
                 await bot.SendMessage(update.Message.Chat.Id, "Please enter a valid game name to search.");
             }
         }
+        
     }
 }
