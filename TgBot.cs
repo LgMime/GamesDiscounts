@@ -1,5 +1,4 @@
-﻿using Save;
-using Telegram.Bot;
+﻿using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -9,7 +8,7 @@ namespace GamesDiscounts
 
     public class TgBot
     {
-        
+
         private static readonly Dictionary<long?, string> userState = new();
 
         static TelegramBotClient bot = new TelegramBotClient("8002657900:AAEu1_d3RQ2ZJS15stf23n3ywJqYNdZRYIY");
@@ -104,7 +103,7 @@ namespace GamesDiscounts
             GameInfo gameInfo = new GameInfo();
             try
             {
-                await gameInfo.DeleteFromSave(someText, update.Message.Chat.Id);
+                await gameInfo.DeleteFromSave(update.Message.Chat.Id, someText);
                 await bot.SendMessage(update.Message.Chat.Id, "Game deleted successfully.");
             }
             catch (Exception)
@@ -119,22 +118,21 @@ namespace GamesDiscounts
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 GameInfo gameInfo = new GameInfo();
+                SaveDB saveDB = new SaveDB();
                 string gameName = update.Message.Text;
 
                 try
                 {
-                    await gameInfo.FoundGameAppIdAsync(gameName , true);
+                    await gameInfo.FoundGameAppIdAsync(gameName, true);
                     if (gameInfo.Name == null || gameInfo.HeaderImage == null)
                     {
                         await bot.SendMessage(update.Message.Chat.Id, "Game not found. Please check the name and try again.");
                         return;
                     }
-                    var entry = new SaveEntry
+                    else
                     {
-                        Chat = update.Message.Chat.Id,
-                        Name = gameName,
-                    };
-                    Save.SaveService.AddItem(entry);
+                        saveDB.SaveGameName(update.Message.Chat.Id, gameName);
+                    }
                     await bot.SendMessage(update.Message.Chat.Id, "Game saved successfully.");
                 }
                 catch (Exception)
@@ -151,23 +149,15 @@ namespace GamesDiscounts
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 GameInfo gameInfo = new GameInfo();
+                SaveDB saveDB = new SaveDB();
                 long id = update.Message.Chat.Id;
-                var savedGames = await gameInfo.FoundSavedGames(id);
+                
 
-                foreach (var game in savedGames)
+                foreach (var game in saveDB.GetSavedGames(id))
                 {
-                    var gameDetails = await gameInfo.FoundGameAppIdAsync(game.Name, true);
-                    Console.WriteLine($"game.Name: {game.Name}, final_formatted: {game.final_formatted}, discount_percent: {game.discount_percent}");
-                    if (game.Name != null && game.final_formatted != null && game.discount_percent != null)
-                    {
-                        await bot.SendPhoto(chatId: update.Message.Chat.Id,
-                            photo: gameDetails.header_image,
-                            caption: $"Name: {gameDetails.Name}\nFinal price: {gameDetails.final_formatted}\nDiscount: {gameDetails.discount_percent}%");
-                    }
-                    else
-                    {
-                        await bot.SendMessage(update.Message.Chat.Id, "No saved games found.");
-                    }
+                    await gameInfo.FoundGameAppIdAsync(game, true);
+                    await bot.SendPhoto(chatId: update.Message.Chat.Id, photo: gameInfo.HeaderImage.Media,
+                    caption: $"Name: {gameInfo.Name}\nFinal price: {gameInfo.FinalPrice}\nDiscount: {gameInfo.Discount}%");
                 }
             }
         }
@@ -186,7 +176,7 @@ namespace GamesDiscounts
                 }
                 else
                 {
-                    await bot.SendMessage(update.Message.Chat.Id, "Game not found. Please check the name and try again.");
+                    await bot.SendMessage(update.Message.Chat.Id, "Game not found. Please check the name and try again or use exactsearch.");
                 }
             }
             else
@@ -194,6 +184,6 @@ namespace GamesDiscounts
                 await bot.SendMessage(update.Message.Chat.Id, "Please enter a valid game name to search.");
             }
         }
-        
+
     }
 }

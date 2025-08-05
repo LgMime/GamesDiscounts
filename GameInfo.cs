@@ -17,6 +17,7 @@ namespace GamesDiscounts
         private static readonly HttpClient _client = new HttpClient();
 
         private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v2/";
+
         public async Task<List<NamesGames>> DesAllGamesAsync()
         {
             string json = await _client.GetStringAsync(SteamStoreListUrl);
@@ -54,15 +55,9 @@ namespace GamesDiscounts
                 HeaderImage = new InputMediaPhoto { Media = appDetails.data.header_image };
 
             }
-            if (foundGame == null)
+            if (foundGame == null || foundGame.Name == $"{gameName} Trailer")
             {
-                return new SaveEntry
-                {
-                    Name = "not found",
-                    discount_percent = null,
-                    final_formatted = null,
-                    header_image = null
-                };
+                return null;
             }
             return new SaveEntry
             {
@@ -73,55 +68,20 @@ namespace GamesDiscounts
             };
         }
 
-        //to do refactor this method
-        public async Task<List<SaveEntry>> FoundSavedGames(long chatId)
+        public async Task FoundSavedGames(long chatId)
         {
+            SaveDB saveDB = new SaveDB();
 
-            SaveEntry saveEntry = new SaveEntry();
-            SaveService saveService = new SaveService();
-
-            var json = File.ReadAllText(Save.SaveService.FilePath);
-            var savedGames = JsonConvert.DeserializeObject<List<SaveEntry>>(json);
-            var userGame = savedGames.Where(game => game.Chat == chatId).ToList();
-            var result = new List<SaveEntry>();
-
-            foreach (var game in userGame)
+            foreach (var game in saveDB.GetSavedGames(chatId))
             {
-                try
-                {
-                    if (game.Chat == chatId)
-                    {
-                        await FoundGameAppIdAsync(game.Name, true);
-                        result.Add(new SaveEntry
-                        {
-                            Chat = game.Chat,
-                            Name = game.Name,
-                            discount_percent = int.TryParse(this.Discount, out var discount) ? discount : null,
-                            final_formatted = this.FinalPrice,
-                            header_image = this.HeaderImage?.Media.ToString()
-                        });
-
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[ERROR] Error processing game {game.Name}: {ex.Message}");
-                    continue; // Skip this game if an error occurs
-                }
+                await FoundGameAppIdAsync(game, true);
             }
-            return result;
         }
-        public async Task DeleteFromSave(string gameNameToDelete, long chatId)
+        public async Task DeleteFromSave(long chatId, string gameNameToDelete)
         {
-            SaveEntry saveEntry = new SaveEntry();
-            SaveService saveService = new SaveService();
+            SaveDB saveDB = new SaveDB();
 
-            var json = File.ReadAllText(Save.SaveService.FilePath);
-            var savedGames = JsonConvert.DeserializeObject<List<SaveEntry>>(json) ?? new List<SaveEntry>();
-
-            savedGames.RemoveAll(game => game.Chat == chatId && game.Name == gameNameToDelete);
-            var updatedJson = JsonConvert.SerializeObject(savedGames, Formatting.Indented);
-            File.WriteAllText(Save.SaveService.FilePath, updatedJson);
+            saveDB.DeleteGameName(chatId, gameNameToDelete);
         }
     }
 }

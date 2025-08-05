@@ -4,7 +4,6 @@
 
 namespace Save
 {
-
     public class SaveService
     {
         public static string FilePath { get; set; } = "SaveData.json";
