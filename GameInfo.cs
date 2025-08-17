@@ -6,8 +6,9 @@ using static GamesDiscounts.FoundGames;
 
 namespace GamesDiscounts
 {
-    internal class GameInfo
+    public class GameInfo
     {
+
         public string Name { get; set; } = string.Empty;
         public string? Discount { get; set; }
         public string? FinalPrice { get; set; }
@@ -40,7 +41,6 @@ namespace GamesDiscounts
 
             if (foundGame == null)
             {
-                Console.WriteLine($"[ERROR] Игра '{gameName}' не найдена в списке");
                 return null;
             }
 
@@ -77,6 +77,24 @@ namespace GamesDiscounts
                 await FoundGameAppIdAsync(game, true);
             }
         }
+
+        public async Task<List<SaveEntry>> FoundAlertGames(long chatId)
+        {
+            SaveDB saveDB = new SaveDB();
+            var result = new List<SaveEntry>();
+            foreach (var game in saveDB.GetSavedGames(chatId))
+            {
+                var entry = await FoundGameAppIdAsync(game, true);
+                if (entry != null)
+                {
+                    result.Add(entry);
+                }
+            }
+            return result;
+        }
+
+
+
         public async Task DeleteFromSave(long chatId, string gameNameToDelete)
         {
             SaveDB saveDB = new SaveDB();
