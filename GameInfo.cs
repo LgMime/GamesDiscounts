@@ -78,16 +78,19 @@ namespace GamesDiscounts
             }
         }
 
-        public async Task<List<SaveEntry>> FoundAlertGames(long chatId)
+        public async Task<List<SaveEntry>> FoundAlertGames(long chatId, int PrecentDiscount = 0)
         {
             SaveDB saveDB = new SaveDB();
             var result = new List<SaveEntry>();
-            foreach (var game in saveDB.GetSavedGames(chatId))
-            {
-                var entry = await FoundGameAppIdAsync(game, true);
-                if (entry != null)
+            if (saveDB.GetSavedGames != null)
+            {               
+                foreach (var game in saveDB.GetSavedGames(chatId))
                 {
-                    result.Add(entry);
+                    var entry = await FoundGameAppIdAsync(game, true);
+                    if (entry != null && entry.discount_percent >= PrecentDiscount)
+                    {
+                        result.Add(entry);
+                    }
                 }
             }
             return result;

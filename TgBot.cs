@@ -18,7 +18,7 @@ namespace GamesDiscounts
         {
             _bot = bot;
         }
-      
+
         public static void Main(string[] args)
         {
             var receiverOptions = new ReceiverOptions { AllowedUpdates = new UpdateType[] { UpdateType.Message, }, };
@@ -34,7 +34,7 @@ namespace GamesDiscounts
         private static async Task updateHandler(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             string someText = UpdateType.Message.ToString();
-            var id = update.Message?.Chat.Id;
+            var id = update.Message.Chat.Id;
 
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
@@ -56,7 +56,7 @@ namespace GamesDiscounts
                         break;
                     case "/sale":
                         await bot.SendMessage(id, "Showing all saved games:");
-                        await SaleHandler(bot, update, token);
+                        await SaleHandlerAsync(bot, update, token);
                         break;
                     case "/delete":
                         await bot.SendMessage(id, "Type a exact game's name for delete:");
@@ -67,12 +67,12 @@ namespace GamesDiscounts
                         userState[id] = "search";
                         break;
                     case "/Alerts":
-                        await bot.SendMessage(id, "We'll notice you");     
-                         alerts.SetTimer(update.Message.Chat.Id, true);
+                        await bot.SendMessage(id, "Write discount's precent 0 to 100");
+                        userState[id] = "Alerts";
                         break;
                     case "/AlertsOff":
-                        await bot.SendMessage(id, "Alert was disabled");    
-                        alerts.StopTimer();
+                        await bot.SendMessage(id, "Alert was disabled");
+                        alerts.StopTimer(id);
                         break;
                     case "/exactsearch":
                         await bot.SendMessage(id, "Type the exact game's name for search:");
@@ -85,19 +85,23 @@ namespace GamesDiscounts
                             switch (state)
                             {
                                 case "save":
-                                    await SaveHandler(bot, update, token);
+                                    await SaveHandlerAsync(bot, update, token);
                                     userState.Remove(id);
                                     break;
                                 case "search":
-                                    await SearchHandler(bot, update, token, someText, false);
+                                    await SearchHandlerAsync(bot, update, token, someText, false);
                                     userState.Remove(id);
                                     break;
                                 case "exactsearch":
-                                    await SearchHandler(bot, update, token, someText, true);
+                                    await SearchHandlerAsync(bot, update, token, someText, true);
+                                    userState.Remove(id);
+                                    break;
+                                case "Alerts":
+                                    AlertsHandlerAsync(bot, update, token, someText);
                                     userState.Remove(id);
                                     break;
                                 case "delete":
-                                    await DeletHandler(bot, update, token, someText);
+                                    await DeletHandlerAsync(bot, update, token, someText);
                                     userState.Remove(id);
                                     break;
                                 default:
@@ -110,7 +114,7 @@ namespace GamesDiscounts
             }
         }
 
-        private static async Task DeletHandler(ITelegramBotClient bot, Update update, CancellationToken token, string someText)
+        private static async Task DeletHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string someText)
         {
             await bot.SendMessage(update.Message.Chat.Id, "Deleting game...");
             GameInfo gameInfo = new GameInfo();
@@ -126,7 +130,7 @@ namespace GamesDiscounts
             }
         }
 
-        private static async Task SaveHandler(ITelegramBotClient bot, Update update, CancellationToken token)
+        private static async Task SaveHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
@@ -168,7 +172,7 @@ namespace GamesDiscounts
             }
         }
 
-        private static async Task SaleHandler(ITelegramBotClient bot, Update update, CancellationToken token)
+        private static async Task SaleHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
@@ -185,7 +189,25 @@ namespace GamesDiscounts
                 }
             }
         }
-        public async Task SendDailyAlerts(long chatId, List<SaveEntry> games)
+        private static void AlertsHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string SomeDiscountPrecent)
+        {
+            if (update.Type == UpdateType.Message && update.Message.Text != null)
+            {
+                bot.SendMessage(update.Message.Chat.Id, "Setting up alerts...");
+                bot.SendMessage(update.Message.Chat.Id, "Ready i'll notify you every day at .... if your game have discount");
+                int finaleDiscountPrecent = Int32.Parse(SomeDiscountPrecent);
+                if (finaleDiscountPrecent < 0 || finaleDiscountPrecent > 100)
+                {
+                    bot.SendMessage(update.Message.Chat.Id, "Please enter a valid discount percentage between 0 and 100.");
+                    return;
+                }
+                else
+                {
+                    alerts.SetTimer(update.Message.Chat.Id, true, finaleDiscountPrecent);
+                }
+            }
+        }
+        public async Task SendDailyAlertsAsync(long chatId, List<SaveEntry> games)
         {
             foreach (var game in games)
             {
@@ -196,12 +218,12 @@ namespace GamesDiscounts
                 );
             }
         }
-        private static async Task SearchHandler(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame, bool searchEquals)
+        private static async Task SearchHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame, bool searchEquals)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 GameInfo gameInfo = new GameInfo();
-                await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");
+                await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");        
                 await gameInfo.FoundGameAppIdAsync(nameGame, searchEquals);
                 if (gameInfo.Name != null && gameInfo.HeaderImage != null)
                 {
