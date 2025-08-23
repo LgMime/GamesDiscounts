@@ -1,35 +1,42 @@
-﻿using Newtonsoft.Json;
-using Save;
+﻿using GamesDiscounts.Models;
+using Newtonsoft.Json;
 using Telegram.Bot.Types;
 using static GamesDiscounts.FoundGames;
 
 
-namespace GamesDiscounts
+namespace GamesDiscounts.Services
 {
-    public class GameInfo
+    public class GameInfo: IGameInfo
     {
+        private readonly IDataBase _dataBase;
+        private readonly IHttpService _hpp;
+        public GameInfo(IDataBase dataBase, IHttpService hpp)
+        {
+            _dataBase = dataBase;
+            _hpp = hpp;
+        }
 
         public string Name { get; set; } = string.Empty;
         public string? Discount { get; set; }
         public string? FinalPrice { get; set; }
-        public InputMediaPhoto? HeaderImage { get; set; }
+        public string? HeaderImage { get; set; }
         public bool SearchEquals { get; set; } = false;
-        private string _priceOrDiscount { get; set; } = "0";
-        private static readonly HttpClient _client = new HttpClient();
+        public string _priceOrDiscount { get; set; } = "0";
+
+
+     
 
         private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v2/";
 
-        public async Task<List<NamesGames>> DesAllGamesAsync()
+        public async Task<List<NamesGames>> GetAllAppsAsync()
         {
-            string json = await _client.GetStringAsync(SteamStoreListUrl);
+            string json = await _hpp.GetStringAsync(SteamStoreListUrl);
             var result = JsonConvert.DeserializeObject<SteamAppListResponse>(json);
             return result.applist.apps;
         }
-
-        public async Task<SaveEntry> FoundGameAppIdAsync(string gameName, bool SearchEquals)
+        public async Task<SaveEntry> FindGameByNameAsync(string gameName, bool SearchEquals)
         {
-
-            var allGames = await DesAllGamesAsync();
+            var allGames = await GetAllAppsAsync();
             NamesGames? foundGame = null;
 
             if (SearchEquals == false)
@@ -44,7 +51,7 @@ namespace GamesDiscounts
                 return null;
             }
 
-            var parse = await _client.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={foundGame.AppId}&cc=ua");//&cc=ua Ukranian region. If i want to get languange Ukrainian i need paste this &cc=ua&l=ukrainian  
+            var parse = await _hpp.GetStringAsync($"https://store.steampowered.com/api/appdetails?appids={foundGame.AppId}&cc=ua");//&cc=ua Ukranian region. If i want to get languange Ukrainian i need paste this &cc=ua&l=ukrainian  
 
             var gameDetails = JsonConvert.DeserializeObject<Dictionary<string, AppDeatailsResponse>>(parse);
             if (gameDetails.TryGetValue(foundGame.AppId.ToString(), out var appDetails) && appDetails.success)
@@ -52,7 +59,7 @@ namespace GamesDiscounts
                 Name = appDetails.data.name;
                 Discount = appDetails.data.price_overview?.discount_percent.ToString() ?? _priceOrDiscount;
                 FinalPrice = appDetails.data.price_overview?.final_formatted ?? _priceOrDiscount;
-                HeaderImage = new InputMediaPhoto { Media = appDetails.data.header_image };
+                HeaderImage =  appDetails.data.header_image;
 
             }
             if (foundGame == null || foundGame.Name == $"{gameName} Trailer")
@@ -70,23 +77,20 @@ namespace GamesDiscounts
 
         public async Task FoundSavedGames(long chatId)
         {
-            SaveDB saveDB = new SaveDB();
-
-            foreach (var game in saveDB.GetSavedGames(chatId))
+            foreach (var game in _dataBase.GetSavedGames(chatId))
             {
-                await FoundGameAppIdAsync(game, true);
+                await FindGameByNameAsync(game, true);
             }
         }
 
-        public async Task<List<SaveEntry>> FoundAlertGames(long chatId, int PrecentDiscount = 0)
+        public async Task<List<SaveEntry>> GetAlertGamesAsync(long chatId, int PrecentDiscount = 0)
         {
-            SaveDB saveDB = new SaveDB();
             var result = new List<SaveEntry>();
-            if (saveDB.GetSavedGames != null)
+            if (_dataBase.GetSavedGames != null)
             {               
-                foreach (var game in saveDB.GetSavedGames(chatId))
+                foreach (var game in _dataBase.GetSavedGames(chatId))
                 {
-                    var entry = await FoundGameAppIdAsync(game, true);
+                    var entry = await FindGameByNameAsync(game, true);
                     if (entry != null && entry.discount_percent >= PrecentDiscount)
                     {
                         result.Add(entry);
@@ -96,13 +100,9 @@ namespace GamesDiscounts
             return result;
         }
 
-
-
-        public async Task DeleteFromSave(long chatId, string gameNameToDelete)
+        public async Task DeleteSavedGameAsync(long chatId, string gameNameToDelete)
         {
-            SaveDB saveDB = new SaveDB();
-
-            saveDB.DeleteGameName(chatId, gameNameToDelete);
+            _dataBase.DeleteGameName(chatId, gameNameToDelete);
         }
     }
 }

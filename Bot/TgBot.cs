@@ -1,25 +1,34 @@
-﻿using Save;
+﻿using GamesDiscounts.Models;
+using GamesDiscounts.Services;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
-namespace GamesDiscounts
+namespace GamesDiscounts.Bot
 {
 
     public class TgBot
     {
+        private readonly IGameInfo _gameInfo;
         private readonly ITelegramBotClient _bot;
+        private readonly IDataBase _dataBase;
+        private readonly IAlert _alert;
+        private readonly GameAlerts _gameAlerts;
         private static readonly Dictionary<long?, string> userState = new();
-        private static GameAlerts alerts = new GameAlerts(new GameInfo()); // для одного экземпляра GameInfo 
 
         static TelegramBotClient bot = new TelegramBotClient("8002657900:AAEu1_d3RQ2ZJS15stf23n3ywJqYNdZRYIY");
-        public TgBot()
+
+        public TgBot(IGameInfo gameInfo, IDataBase dataBase, IAlert alert, GameAlerts gameAlerts)
         {
+            _gameInfo = gameInfo;
             _bot = bot;
+            _dataBase = dataBase;
+            _alert = alert;
+            gameAlerts.OnTimerElapsed += SendDailyAlertsAsync;
         }
 
-        public static void Main(string[] args)
+        public void Main(string[] args)
         {
             var receiverOptions = new ReceiverOptions { AllowedUpdates = new UpdateType[] { UpdateType.Message, }, };
             bot.StartReceiving(updateHandler, errorHandler, receiverOptions);
@@ -31,7 +40,7 @@ namespace GamesDiscounts
             throw new Exception($"An error occurred in the bot: {exception.Message}", exception);
         }
 
-        private static async Task updateHandler(ITelegramBotClient bot, Update update, CancellationToken token)
+        private async Task updateHandler(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             string someText = UpdateType.Message.ToString();
             var id = update.Message.Chat.Id;
@@ -66,13 +75,13 @@ namespace GamesDiscounts
                         await bot.SendMessage(id, "Type a game's name for seacrh:");
                         userState[id] = "search";
                         break;
-                    case "/Alerts":
+                    case "/alerts":
                         await bot.SendMessage(id, "Write discount's precent 0 to 100");
                         userState[id] = "Alerts";
                         break;
-                    case "/AlertsOff":
+                    case "/alertsoff":
                         await bot.SendMessage(id, "Alert was disabled");
-                        alerts.StopTimer(id);
+                        _alert.StopTimer(id);
                         break;
                     case "/exactsearch":
                         await bot.SendMessage(id, "Type the exact game's name for search:");
@@ -113,14 +122,13 @@ namespace GamesDiscounts
                 }
             }
         }
-
-        private static async Task DeletHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string someText)
+        private async Task DeletHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string someText)
         {
             await bot.SendMessage(update.Message.Chat.Id, "Deleting game...");
-            GameInfo gameInfo = new GameInfo();
+
             try
             {
-                await gameInfo.DeleteFromSave(update.Message.Chat.Id, someText);
+                await _gameInfo.DeleteSavedGameAsync(update.Message.Chat.Id, someText);
                 await bot.SendMessage(update.Message.Chat.Id, "Game deleted successfully.");
             }
             catch (Exception)
@@ -130,20 +138,16 @@ namespace GamesDiscounts
             }
         }
 
-        private static async Task SaveHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
+        private async Task SaveHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
-
-                GameInfo gameInfo = new GameInfo();
-                SaveDB saveDB = new SaveDB();
-
                 long id = update.Message.Chat.Id;
                 string gameName = update.Message.Text;
 
                 try
                 {
-                    foreach (var game in saveDB.GetSavedGames(id))
+                    foreach (var game in _dataBase.GetSavedGames(id))
                     {
                         if (game.Equals(gameName, StringComparison.OrdinalIgnoreCase))
                         {
@@ -151,15 +155,15 @@ namespace GamesDiscounts
                             return;
                         }
                     }
-                    await gameInfo.FoundGameAppIdAsync(gameName, true);
-                    if (gameInfo.Name == null || gameInfo.HeaderImage == null)
+                    await _gameInfo.FindGameByNameAsync(gameName, true);
+                    if (_gameInfo.Name == null || _gameInfo.HeaderImage == null)
                     {
                         await bot.SendMessage(id, "Game not found. Please check the name and try again.");
                         return;
                     }
                     else
                     {
-                        saveDB.SaveGameName(id, gameName);
+                        _dataBase.SaveGameName(id, gameName);
                     }
                     await bot.SendMessage(id, "Game saved successfully.");
                 }
@@ -172,30 +176,29 @@ namespace GamesDiscounts
             }
         }
 
-        private static async Task SaleHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
+        private async Task SaleHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
-                GameInfo gameInfo = new GameInfo();
-                SaveDB saveDB = new SaveDB();
                 long id = update.Message.Chat.Id;
 
 
-                foreach (var game in saveDB.GetSavedGames(id))
+                foreach (var game in _dataBase.GetSavedGames(id))
                 {
-                    await gameInfo.FoundGameAppIdAsync(game, true);
-                    await bot.SendPhoto(chatId: update.Message.Chat.Id, photo: gameInfo.HeaderImage.Media,
-                    caption: $"Name: {gameInfo.Name}\nFinal price: {gameInfo.FinalPrice}\nDiscount: {gameInfo.Discount}%");
+                    var photo = new InputMediaPhoto(_gameInfo.HeaderImage);
+                    await _gameInfo.FindGameByNameAsync(game, true);
+                    await bot.SendPhoto(chatId: update.Message.Chat.Id, photo: photo.Media,
+                    caption: $"Name: {_gameInfo.Name}\nFinal price: {_gameInfo.FinalPrice}\nDiscount: {_gameInfo.Discount}%");
                 }
             }
         }
-        private static void AlertsHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string SomeDiscountPrecent)
+        private void AlertsHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string SomeDiscountPrecent)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 bot.SendMessage(update.Message.Chat.Id, "Setting up alerts...");
                 bot.SendMessage(update.Message.Chat.Id, "Ready i'll notify you every day at .... if your game have discount");
-                int finaleDiscountPrecent = Int32.Parse(SomeDiscountPrecent);
+                int finaleDiscountPrecent = int.Parse(SomeDiscountPrecent);
                 if (finaleDiscountPrecent < 0 || finaleDiscountPrecent > 100)
                 {
                     bot.SendMessage(update.Message.Chat.Id, "Please enter a valid discount percentage between 0 and 100.");
@@ -203,7 +206,7 @@ namespace GamesDiscounts
                 }
                 else
                 {
-                    alerts.SetTimer(update.Message.Chat.Id, true, finaleDiscountPrecent);
+                    _alert.SetTimer(update.Message.Chat.Id, true, finaleDiscountPrecent);
                 }
             }
         }
@@ -218,18 +221,19 @@ namespace GamesDiscounts
                 );
             }
         }
-        private static async Task SearchHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame, bool searchEquals)
+        private async Task SearchHandlerAsync(ITelegramBotClient bot, Update update, CancellationToken token, string nameGame, bool searchEquals)
         {
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
-                GameInfo gameInfo = new GameInfo();
-                await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");        
-                await gameInfo.FoundGameAppIdAsync(nameGame, searchEquals);
-                if (gameInfo.Name != null && gameInfo.HeaderImage != null)
+                await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");
+                await _gameInfo.FindGameByNameAsync(nameGame, searchEquals);
+                if (_gameInfo.Name != null && _gameInfo.HeaderImage != null)
                 {
+
+                    var photo = new InputMediaPhoto(_gameInfo.HeaderImage);
                     await bot.SendPhoto(chatId: update.Message.Chat.Id,
-                    photo: gameInfo.HeaderImage.Media,
-                    caption: $"Name: {gameInfo.Name}\nFinal price: {gameInfo.FinalPrice}\nDiscount: {gameInfo.Discount}%");
+                    photo: photo.Media,
+                    caption: $"Name: {_gameInfo.Name}\nFinal price: {_gameInfo.FinalPrice}\nDiscount: {_gameInfo.Discount}%");
                 }
                 else
                 {

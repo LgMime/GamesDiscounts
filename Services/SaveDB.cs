@@ -1,8 +1,9 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using GamesDiscounts.Models;
+using Microsoft.Data.SqlClient;
 
-namespace GamesDiscounts
+namespace GamesDiscounts.Services
 {
-    class SaveDB
+    public class SaveDB: IDataBase
     {
         SqlConnection connection = new SqlConnection(@"Data Source=MIME;Initial Catalog=SavedGame;Integrated Security=True;Trust Server Certificate=True");
 
@@ -13,6 +14,7 @@ namespace GamesDiscounts
             using (SqlCommand command = new SqlCommand(query, connection))
             {
                 command.Parameters.AddWithValue("@ChatId", ChatId);
+
                 command.Parameters.AddWithValue("@GameName", GameName);
                 command.ExecuteNonQuery();// Insert the game name into the database
             }
@@ -20,7 +22,7 @@ namespace GamesDiscounts
         }
         public List<string> GetSavedGames(long ChatId)
         {
-            List<string> savedGames = new List<string>(); 
+            List<string> savedGames = new List<string>();
             connection.Open();
             string query = "SELECT GameName FROM SavedGames_db WHERE ChatId = @ChatId";
             using (SqlCommand command = new SqlCommand(query, connection))

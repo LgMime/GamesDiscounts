@@ -1,4 +1,4 @@
-﻿namespace Save
+﻿namespace GamesDiscounts.Models
 {
     public class SaveEntry //my jsoon structure for saving data
     {

@@ -1,12 +1,14 @@
-﻿using Save;
+﻿using GamesDiscounts.Bot;
+using GamesDiscounts.Models;
 
-namespace GamesDiscounts
+namespace GamesDiscounts.Services
 {
-    public class GameAlerts
+    public class GameAlerts: IAlert
     {
-        private readonly GameInfo _gameInfo;
+        private readonly IGameInfo _gameInfo;
         private CancellationTokenSource _cts = new CancellationTokenSource();
         private Dictionary<long, (Timer Timer, CancellationTokenSource Cts)>  _timers = new Dictionary<long, (Timer, CancellationTokenSource)>();
+        public event Func<long, List<SaveEntry>, Task> OnTimerElapsed;
 
         public GameAlerts(GameInfo gameInfo)
         {
@@ -39,16 +41,25 @@ namespace GamesDiscounts
                     Console.WriteLine("[INFO] Таймер остановлен");
                     return;
                 }
-                TgBot _tgBot = new TgBot();
-                if (_tgBot == null)
-                {
-                    _tgBot = new TgBot();
-                }
                 long chatIdFromState = (long)state;
-                List<SaveEntry> alertGames = await _gameInfo.FoundAlertGames(chatIdFromState, PrecentDiscount);
-                await _tgBot.SendDailyAlertsAsync(chatIdFromState, alertGames);
+               await EHandler(chatIdFromState, PrecentDiscount);
             }, chatId, timeToGo, period);
             _timers[chatId] = (_timer, _cts);
+        }
+        public async Task EHandler(long chatId, int PrecentDiscount = 0)
+        {
+            var handler  = OnTimerElapsed;
+            if (handler != null)
+            {
+                var games = await _gameInfo.GetAlertGamesAsync(chatId, PrecentDiscount);
+
+                var tasks = handler
+                    .GetInvocationList()
+                    .Cast<Func<long, List<SaveEntry>, Task>>()
+                    .Select(h => h(chatId, games));
+
+                await Task.WhenAll(tasks); 
+            }
         }
         public void StopTimer(long chatId)
         {
