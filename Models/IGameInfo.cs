@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace GamesDiscounts.Models
+﻿namespace GamesDiscounts.Models
 {
     public interface IGameInfo
     {

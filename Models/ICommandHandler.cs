@@ -4,12 +4,9 @@ namespace GamesDiscounts.Models
 {
     public interface ICommandHandler
     {
-        string Command { get; }
-       
-
+        string Command { get; } 
         Task HandleCommand(ITelegramBotClient bot, Update update, CancellationToken token);
         Task HandleInput(ITelegramBotClient bot, Update update, CancellationToken token);
-
         bool RequiresInput => true;
     }
 }

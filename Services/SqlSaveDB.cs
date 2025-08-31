@@ -1,7 +1,5 @@
 ﻿using GamesDiscounts.Models;
 using Microsoft.Data.SqlClient;
-using System.Windows.Input;
-using Telegram.Bot.Types;
 
 namespace GamesDiscounts.Services
 {

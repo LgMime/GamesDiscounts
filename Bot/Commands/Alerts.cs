@@ -1,6 +1,5 @@
 ﻿using GamesDiscounts.Models;
 using GamesDiscounts.Services;
-using System;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;

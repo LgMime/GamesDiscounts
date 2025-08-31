@@ -1,5 +1,4 @@
 ﻿using GamesDiscounts.Models;
-using Telegram.Bot.Types;
 
 namespace GamesDiscounts.Services
 {
