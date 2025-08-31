@@ -8,8 +8,8 @@ namespace GamesDiscounts.Bot.Commands
     public class ExactSearch: ICommandHandler
     {
         private readonly IGameInfo _gameInfo;
-        private readonly Message _message;      
-        public ExactSearch(IGameInfo gameInfo, Message message)
+        private readonly BotMessage _message;      
+        public ExactSearch(IGameInfo gameInfo, BotMessage message)
         {
             _gameInfo = gameInfo;
             _message = message;

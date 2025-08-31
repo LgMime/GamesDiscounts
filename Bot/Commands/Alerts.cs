@@ -12,7 +12,7 @@ namespace GamesDiscounts.Bot.Commands
         private readonly IAlert _alert;
         private readonly SavedGamesService _savedGamesService;
 
-        public Alerts(IAlert alert, GameAlerts gameAlerts, AlertsNotifier _alertsNotifier, SavedGamesService savedGamesService)
+        public Alerts(IAlert alert, GameAlerts gameAlerts, AlertNotifier _alertsNotifier, SavedGamesService savedGamesService)
         {
             _alert = alert;
             gameAlerts.OnTimerElapsed -= _alertsNotifier.SendDailyAlertsAsync;
@@ -39,7 +39,7 @@ namespace GamesDiscounts.Bot.Commands
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
 
-                await bot.SendMessage(update.Message.Chat.Id, "Ready i'll notify you every day at .... if your game have discount");
+                await bot.SendMessage(update.Message.Chat.Id, "Ready i'll notify you every day at 21:05 if your game have discount");
                 int finaleDiscountPrecent = int.Parse(DiscountPrecent);
                 if (finaleDiscountPrecent < 0 || finaleDiscountPrecent > 100)
                 {

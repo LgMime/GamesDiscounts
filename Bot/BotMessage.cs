@@ -4,10 +4,10 @@ using Telegram.Bot.Types;
 
 namespace GamesDiscounts.Bot
 {
-    public class Message
+    public class BotMessage
     {
         private readonly ITelegramBotClient _bot;
-        public Message(ITelegramBotClient bot)
+        public BotMessage(ITelegramBotClient bot)
         {
             _bot = bot;
         }

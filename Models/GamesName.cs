@@ -7,10 +7,10 @@ public class SteamAppListResponse
 
 public class AppList
 {
-    public List<NamesGames> apps { get; set; }
+    public List<GamesName> apps { get; set; }
 }
 
-public class NamesGames
+public class GamesName
 {
     [JsonProperty("appid")]
     public int AppId { get; set; }

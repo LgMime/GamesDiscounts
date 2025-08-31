@@ -1,6 +1,6 @@
-﻿namespace GamesDiscounts
+﻿namespace GamesDiscounts.Models
 {
-    internal class FoundGames
+    internal class FoundGame
     {
         public class AppDeatailsResponse
         {

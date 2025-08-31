@@ -19,7 +19,7 @@ namespace GamesDiscounts.Services
         public void SetTimer(long СhatId, int PrecentDiscount = 0)
         {
 
-            DailyAlerts(21, 00, СhatId, PrecentDiscount);
+            DailyAlerts(21, 05, СhatId, PrecentDiscount);
         }
 
         public void DailyAlerts(int hour, int minute, long chatId, int PrecentDiscount = 0)

@@ -15,11 +15,11 @@ namespace GamesDiscounts
             services.AddSingleton<ITelegramBotClient>(new TelegramBotClient("8002657900:AAEu1_d3RQ2ZJS15stf23n3ywJqYNdZRYIY"));
 
 
-            services.AddSingleton<Message>();
+            services.AddSingleton<BotMessage>();
             services.AddSingleton<GameAlerts>();
             services.AddSingleton<GameInfo>();
             services.AddSingleton<SavedGamesService>();
-            services.AddSingleton<AlertsNotifier>();
+            services.AddSingleton<AlertNotifier>();
             services.AddSingleton<SqlSaveDB>();
 
             services.AddSingleton<IAlert, GameAlerts>();

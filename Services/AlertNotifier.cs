@@ -3,12 +3,12 @@ using GamesDiscounts.Models;
 
 namespace GamesDiscounts.Services
 {
-    public class AlertsNotifier
+    public class AlertNotifier
     {
 
-        private readonly Message _message;
+        private readonly BotMessage _message;
 
-        public AlertsNotifier(Message message)
+        public AlertNotifier(BotMessage message)
         {
             _message = message;
         }

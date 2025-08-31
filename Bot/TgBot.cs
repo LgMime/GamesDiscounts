@@ -6,7 +6,6 @@ using Telegram.Bot.Types.Enums;
 
 namespace GamesDiscounts.Bot
 {
-
     public class TgBot
     {
 

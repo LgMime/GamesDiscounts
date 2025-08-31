@@ -1,6 +1,6 @@
 ﻿using GamesDiscounts.Models;
 using Newtonsoft.Json;
-using static GamesDiscounts.FoundGames;
+using static GamesDiscounts.Models.FoundGame;
 
 
 namespace GamesDiscounts.Services
@@ -15,7 +15,7 @@ namespace GamesDiscounts.Services
             
         private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v2/";
 
-        public async Task<List<NamesGames>> GetAllAppsAsync()
+        public async Task<List<GamesName>> GetAllAppsAsync()
         {
             string json = await _hpp.GetStringAsync(SteamStoreListUrl);
             var result = JsonConvert.DeserializeObject<SteamAppListResponse>(json);
@@ -24,7 +24,7 @@ namespace GamesDiscounts.Services
         public async Task<GameDetailsDto> FindGameByNameAsync(string gameName, bool SearchEquals)
         {
             var allGames = await GetAllAppsAsync();
-            NamesGames? foundGame = null;
+            GamesName? foundGame = null;
 
             if (SearchEquals == false)
                 foundGame = allGames.FirstOrDefault(games => games.Name != null && games.Name.StartsWith(gameName, StringComparison.OrdinalIgnoreCase));

@@ -7,8 +7,8 @@ namespace GamesDiscounts.Bot.Commands
     public class Sale : ICommandHandler
     {
         private readonly ISavedGamesService _savedGamesService;
-        private readonly Message _message;
-        public Sale(ISavedGamesService savedGamesService, Message message)
+        private readonly BotMessage _message;
+        public Sale(ISavedGamesService savedGamesService, BotMessage message)
         {
             _savedGamesService = savedGamesService;
             _message = message;

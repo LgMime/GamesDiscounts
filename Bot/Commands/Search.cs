@@ -8,10 +8,10 @@ namespace GamesDiscounts.Bot.Commands
     public class Search : ICommandHandler
     {
         private readonly IGameInfo _gameInfo;
-        private readonly Message _message;
+        private readonly BotMessage _message;
         public string Command => "/search";
         public bool RequiresInput => true;
-        public Search(IGameInfo gameInfo, Message message)
+        public Search(IGameInfo gameInfo, BotMessage message)
         {
             _gameInfo = gameInfo;
             _message = message;
@@ -19,7 +19,7 @@ namespace GamesDiscounts.Bot.Commands
         public async Task HandleCommand(ITelegramBotClient bot, Update update, CancellationToken token)
         {
             var chatId = update.Message.Chat.Id;
-            await bot.SendMessage(chatId, "✍ Введи название игры для поиска:", cancellationToken: token);
+            await bot.SendMessage(chatId, "✍ Enter the game name to search:", cancellationToken: token);
         }
         public async Task HandleInput(ITelegramBotClient bot, Update update, CancellationToken token)
         {
