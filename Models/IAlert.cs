@@ -1,8 +1,11 @@
-﻿namespace GamesDiscounts.Models
+﻿
+namespace GamesDiscounts.Models
 {
     public interface IAlert
     {
-        void SetTimer(long ChatId, bool TurnOn, int PrecentDiscount = 0);
+        event Func<long, List<GameDetailsDto>, Task> OnTimerElapsed;
+
+        void SetTimer(long ChatId, int PrecentDiscount = 0);
         void StopTimer(long chatId);
 
     }
