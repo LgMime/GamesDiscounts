@@ -6,7 +6,6 @@ namespace GamesDiscounts.Services
     public class SqlSaveDB : IDataBase
     {
         private static string connectionString = @"Data Source=MIME;Initial Catalog=SavedGame;Integrated Security=True;Trust Server Certificate=True";
-        SqlConnection connection = new SqlConnection(connectionString);
 
         public async Task SaveGameNameAsync(long ChatId, string GameName)
         {

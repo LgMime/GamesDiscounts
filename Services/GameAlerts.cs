@@ -19,7 +19,7 @@ namespace GamesDiscounts.Services
         public void SetTimer(long СhatId, int PrecentDiscount = 0)
         {
 
-            DailyAlerts(21, 05, СhatId, PrecentDiscount);
+            DailyAlerts(21, 02, СhatId, PrecentDiscount);
         }
 
         public void DailyAlerts(int hour, int minute, long chatId, int PrecentDiscount = 0)
@@ -43,7 +43,7 @@ namespace GamesDiscounts.Services
                 nextRun = nextRun.AddDays(1);
 
             TimeSpan timeToGo = nextRun - currentTime;
-            TimeSpan period = TimeSpan.FromMinutes(1);
+            TimeSpan period = TimeSpan.FromDays(1);
 
             Console.WriteLine($"[INFO] Запускаем таймер для чата {chatId} на {timeToGo.TotalMinutes} минут");
 

@@ -21,12 +21,12 @@ namespace GamesDiscounts
             services.AddSingleton<SavedGamesService>();
             services.AddSingleton<AlertNotifier>();
             services.AddSingleton<SqlSaveDB>();
+            services.AddSingleton<HttpService>();
 
             services.AddSingleton<IAlert, GameAlerts>();
             services.AddSingleton<ISavedGamesService, SavedGamesService>();
             services.AddSingleton<IGameInfo, GameInfo>();
             services.AddSingleton<IDataBase, SqlSaveDB>();
-            services.AddSingleton<IHttpService, HttpService>();
 
             services.AddSingleton<ICommandHandler, Start>();
             services.AddSingleton<ICommandHandler, Search>();

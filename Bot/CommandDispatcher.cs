@@ -25,7 +25,7 @@ namespace GamesDiscounts.Bot
             var chatId = update.Message.Chat.Id;
             var message = update.Message.Text;
 
-            if (message.StartsWith("/"))
+            if (message != null && message.StartsWith("/"))
             {
                 var command = message;
                 if (_commands.TryGetValue(command, out var handler))

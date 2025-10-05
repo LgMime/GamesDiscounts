@@ -33,8 +33,8 @@ namespace GamesDiscounts.Bot.Commands
             if (update.Type == UpdateType.Message && update.Message.Text != null)
             {
                 await bot.SendMessage(update.Message.Chat.Id, "Searching for the game...");
-                var gameDetails = await _gameInfo.FindGameByNameAsync(gameName, searchEquals);
-                if (gameDetails.Name != null && gameDetails.header_image != null)
+                var gameDetails = await _gameInfo.FindGameByNameAsync(gameName, searchEquals) ?? null;
+                if (gameDetails?.Name != null && gameDetails.header_image != null)
                 {
                     await _message.SendMessageAsync(update.Message.Chat.Id, gameDetails);
                 }

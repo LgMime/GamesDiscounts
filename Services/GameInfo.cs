@@ -7,8 +7,8 @@ namespace GamesDiscounts.Services
 {
     public class GameInfo: IGameInfo
     {
-        private readonly IHttpService _hpp;
-        public GameInfo(IDataBase dataBase, IHttpService hpp)
+        private readonly HttpService _hpp;
+        public GameInfo(IDataBase dataBase, HttpService hpp)
         {
             _hpp = hpp;
         }

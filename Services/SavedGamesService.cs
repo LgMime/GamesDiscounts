@@ -33,7 +33,8 @@ namespace GamesDiscounts.Services
         {
             var savedGames = await GetSavedGamesAsync(chatId);
             if (savedGames.Count == 0 || savedGames == null)
-                throw new InvalidOperationException("No saved games.");
+            { return new List<GameDetailsDto>(); }
+
 
             var tasks = savedGames.Select(game => _gameInfo.FindGameByNameAsync(game, true));
             var games = await Task.WhenAll(tasks);

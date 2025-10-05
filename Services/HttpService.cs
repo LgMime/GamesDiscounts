@@ -2,7 +2,7 @@
 
 namespace GamesDiscounts.Services
 {
-    public class HttpService: IHttpService
+    public class HttpService
     {
         private readonly HttpClient _client = new HttpClient();
 
