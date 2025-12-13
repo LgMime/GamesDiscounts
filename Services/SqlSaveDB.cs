@@ -56,7 +56,7 @@ namespace GamesDiscounts.Services
                     {
                         ChatId = reader.GetInt64(reader.GetOrdinal("ChatId")),
                         IsEnabled = reader.GetBoolean(reader.GetOrdinal("AlertsEnabled")),
-                        DiscountPercent = reader.GetInt32(reader.GetOrdinal("DiscountPercent"))
+                        DiscountPercent = Convert.ToInt32(reader.GetByte(reader.GetOrdinal("DiscountPercent")))
 
                     });
                 } 

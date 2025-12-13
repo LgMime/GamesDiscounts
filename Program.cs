@@ -12,7 +12,9 @@ namespace GamesDiscounts
         public static async Task Main(string[] args)
         {
             var services = new ServiceCollection();
-            services.AddSingleton<ITelegramBotClient>(new TelegramBotClient("8002657900:AAEu1_d3RQ2ZJS15stf23n3ywJqYNdZRYIY"));
+
+            string bottokken =  File.ReadAllText("C:\\Software\\DiscountApi.txt");
+            services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(bottokken));
 
 
             services.AddSingleton<BotMessage>();

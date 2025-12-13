@@ -13,7 +13,7 @@ namespace GamesDiscounts.Services
             _hpp = hpp;
         }
             
-        private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v2/";
+        private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v0002/";
 
         public async Task<List<GamesName>> GetAllAppsAsync()
         {
