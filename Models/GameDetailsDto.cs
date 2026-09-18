@@ -1,11 +1,18 @@
-﻿namespace GamesDiscounts.Models
+﻿using Newtonsoft.Json;
+
+namespace GamesDiscounts.Models
 {
-    public class GameDetailsDto //Data Transfer Object
+    public class GameDetailsDto
     {
-        public long Chat { get; set; }
         public string? Name { get; set; }
-        public int? discount_percent { get; set; }
-        public string? final_formatted { get; set; }
-        public string? header_image { get; set; }
+
+        [JsonProperty("discount_percent")]
+        public int DiscountPercent { get; set; }
+
+        [JsonProperty("final_formatted")]
+        public string? FinalFormatted { get; set; }
+
+        [JsonProperty("header_image")]
+        public string? HeaderImage { get; set; }
     }
 }

@@ -10,12 +10,7 @@ namespace GamesDiscounts.Bot
         private readonly Dictionary<string, ICommandHandler> _commands;
         private readonly Dictionary<long, string> _userState = new();
 
-        public CommandDispatcher(IEnumerable<ICommandHandler> commandHandlers, Search search, ExactSearch exactSearch, Save save,
-            Delete delete,
-            Alerts alerts,
-            AlertsOff alertsOff,
-            Sale sale,
-            Start start)
+        public CommandDispatcher(IEnumerable<ICommandHandler> commandHandlers)
         {
             _commands = commandHandlers.ToDictionary(cmd => cmd.Command, StringComparer.OrdinalIgnoreCase);
         }

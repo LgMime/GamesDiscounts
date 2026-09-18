@@ -1,25 +1,40 @@
 ﻿using GamesDiscounts.Models;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Caching.Memory;
 using static GamesDiscounts.Models.FoundGame;
 
 
 namespace GamesDiscounts.Services
 {
-    public class GameInfo: IGameInfo
+    public class GameInfo : IGameInfo
     {
         private readonly HttpService _hpp;
+        private readonly IMemoryCache _cache;
+
         public GameInfo(IDataBase dataBase, HttpService hpp)
         {
             _hpp = hpp;
         }
-            
+
         private const string SteamStoreListUrl = "https://api.steampowered.com/ISteamApps/GetAppList/v0002/";
 
         public async Task<List<GamesName>> GetAllAppsAsync()
         {
-            string json = await _hpp.GetStringAsync(SteamStoreListUrl);
-            var result = JsonConvert.DeserializeObject<SteamAppListResponse>(json);
-            return result.applist.apps;
+            if (!_cache.TryGetValue("AllSteamGames", out List<GamesName> cachedGames))
+            {
+                // Если в кэше пусто - качаем из Steam
+                string json = await _hpp.GetStringAsync(SteamStoreListUrl);
+                var result = JsonConvert.DeserializeObject<SteamAppListResponse>(json);
+                cachedGames = result.applist.apps;
+
+                // Сохраняем в кэш на 24 часа
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromHours(24));
+
+                _cache.Set("AllSteamGames", cachedGames, cacheEntryOptions);
+            }
+
+            return cachedGames;
         }
         public async Task<GameDetailsDto> FindGameByNameAsync(string gameName, bool SearchEquals)
         {
@@ -46,14 +61,13 @@ namespace GamesDiscounts.Services
                 return new GameDetailsDto
                 {
                     Name = appDetails.data.name,
-                    discount_percent = appDetails.data.price_overview?.discount_percent ?? 0,
-                    final_formatted = appDetails.data.price_overview?.final_formatted ?? "0",
-                    header_image = appDetails.data.header_image,
-
+                    DiscountPercent = appDetails.data.price_overview?.discount_percent ?? 0,
+                    FinalFormatted = appDetails.data.price_overview?.final_formatted ?? "0",
+                    HeaderImage = appDetails.data.header_image,
                 };
             }
             return null;
-        }    
+        }
     }
 }
 
